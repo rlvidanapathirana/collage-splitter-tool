@@ -174,7 +174,16 @@ body::before {
   color: var(--cream);
 }
 .dropzone p { margin: 0; color: var(--muted); font-size: 13px; max-width: 340px; line-height: 1.6; }
-.dropzone input { display: none; }
+/* File input: visually hidden but still clickable — display:none can block browser file picker */
+.file-input-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
 
 /* ── Canvas Panel ───────────────────────────────────────────── */
 .canvas-panel {
