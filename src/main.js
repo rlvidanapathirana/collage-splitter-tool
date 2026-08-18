@@ -1,5 +1,5 @@
 // main.js — Collage Splitter V5 entry point
-import JSZip from 'jszip';
+// JSZip is loaded globally via CDN in index.html
 import { detectGrid } from './detection.js';
 import { cropToBlob, buildFilename } from './downloader.js';
 import { saveSettings, loadSettings, clearLineSettings } from './storage.js';
