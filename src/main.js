@@ -81,8 +81,7 @@ trimYSlider.disabled = !trimEnabled;
 //  Upload handling
 // ─────────────────────────────────────────────
 function wireDropzone(el) {
-  el.addEventListener('click', () => fileInput.click());
-  el.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') fileInput.click(); });
+  // Label inherently triggers its child input, no JS click needed
   el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag'); });
   el.addEventListener('dragleave', () => el.classList.remove('drag'));
   el.addEventListener('drop', e => {
@@ -94,18 +93,18 @@ wireDropzone(document.getElementById('dropzone'));
 
 fileInput.addEventListener('change', e => {
   if (e.target.files?.[0]) loadFile(e.target.files[0]);
-  // reset so same file can be re-selected (try-next)
-  fileInput.value = '';
 });
 
 function loadFile(file) {
-  if (!file.type.startsWith('image/')) return;
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
     const image = new Image();
     image.onload = () => setupImage(image, file.name);
+    image.onerror = () => alert("Could not load image. Please ensure it is a valid JPG/PNG/WEBP file.");
     image.src = ev.target.result;
   };
+  reader.onerror = () => alert("Failed to read the file from your device.");
   reader.readAsDataURL(file);
 }
 
