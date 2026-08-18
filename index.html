@@ -9,8 +9,8 @@
   <meta property="og:description" content="Split any image collage into individual high-resolution frames. Advanced auto-detection, metadata scrubbing, and no uploads required.">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#060B14">
-  <script type="module" crossorigin src="./assets/index-BD6YrF3j.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DS88ZpPE.css">
+  <script type="module" crossorigin src="./assets/index-CIZc9Ir5.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-EA8CtBQk.css">
 </head>
 <body>
 <div class="wrap">
@@ -27,18 +27,16 @@
 
     <!-- Canvas Area -->
     <div id="canvasArea">
-      <!-- Dropzone stays in DOM always -->
-      <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Load collage image">
+      <!-- Dropzone: label wraps input = most reliable file picker across all browsers -->
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="image/*" class="file-input-hidden">
         <div class="icon"></div>
         <h2>Load collage image</h2>
         <p>Tap to browse, or drag a .jpg / .png / .webp collage here. Set up the grid, then pick the frames you want below.</p>
-      </div>
-      <!-- Canvas injected here after load -->
+      </label>
+      <!-- Canvas panel injected here after image loads -->
       <div id="canvasPanel" style="display:none;"></div>
     </div>
-    
-    <!-- Hidden File Input -->
-    <input type="file" id="fileInput" accept="image/*" style="display:none;">
 
     <!-- Controls Panel -->
     <div class="controls" id="controls" style="display:none;">
