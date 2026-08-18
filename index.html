@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+  <title>Collage Splitter — Split any image collage into individual frames</title>
+  <meta name="description" content="Free browser-based tool to split image collages into individual frames. Auto-detects grid lines, strips metadata, and saves at full resolution. Works on mobile and desktop.">
+  <meta property="og:title" content="Collage Splitter — Contact Sheet Tool">
+  <meta property="og:description" content="Split any image collage into individual high-resolution frames. Advanced auto-detection, metadata scrubbing, and no uploads required.">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#060B14">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="masthead-left">
+      <h1>COLLAGE SPLITTER</h1>
+      <div class="tag">collage → individual frames · full resolution · metadata stripped</div>
+    </div>
+    <div class="frame-counter" id="frameCounter">NO IMAGE LOADED</div>
+  </header>
+
+  <div class="stage">
+
+    <!-- Canvas Area -->
+    <div id="canvasArea">
+      <!-- Dropzone stays in DOM always -->
+      <div class="dropzone" id="dropzone" role="button" tabindex="0" aria-label="Load collage image">
+        <div class="icon"></div>
+        <h2>Load collage image</h2>
+        <p>Tap to browse, or drag a .jpg / .png / .webp collage here. Set up the grid, then pick the frames you want below.</p>
+      </div>
+      <!-- Canvas injected here after load -->
+      <div id="canvasPanel" style="display:none;"></div>
+    </div>
+    
+    <!-- Hidden File Input -->
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+
+    <!-- Controls Panel -->
+    <div class="controls" id="controls" style="display:none;">
+
+      <!-- 1. Quick grid -->
+      <div class="ctrl-group">
+        <div class="label">
+          Quick grid (uniform)
+          <span class="live-badge">LIVE</span>
+        </div>
+        <div class="stepper-pair">
+          <div class="stepper">
+            <button data-adj="cols" data-dir="-1" aria-label="fewer columns">&minus;</button>
+            <input type="number" id="colsInput" value="3" min="1" max="12" aria-label="columns">
+            <button data-adj="cols" data-dir="1" aria-label="more columns">+</button>
+          </div>
+          <span class="x-sep">&times;</span>
+          <div class="stepper">
+            <button data-adj="rows" data-dir="-1" aria-label="fewer rows">&minus;</button>
+            <input type="number" id="rowsInput" value="3" min="1" max="12" aria-label="rows">
+            <button data-adj="rows" data-dir="1" aria-label="more rows">+</button>
+          </div>
+        </div>
+        <div class="hint">Tap +/− to instantly preview the grid on the image.</div>
+        <button class="btn ghost" id="applyUniformBtn">↺ Snap to uniform grid</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 2. Auto-detect -->
+      <div class="ctrl-group">
+        <div class="label">Smart detect</div>
+        <button class="btn" id="autoDetectBtn">⊹ Auto-detect grid</button>
+        <div class="hint">Uses edge + seam analysis. After detecting, fine-tune with rulers.</div>
+        <div class="status" id="detectStatus"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 3. Trim border -->
+      <div class="ctrl-group trim-group">
+        <div class="label-row">
+          <div class="label">Trim border (inset crop)</div>
+          <label class="toggle-switch" aria-label="Enable trim border">
+            <input type="checkbox" id="enableTrimCheck" checked>
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="hint">Remove seam edges from saved frames. Set separately for width (←→) and height (↑↓).</div>
+
+        <!-- Width trim: left + right inset -->
+        <div class="trim-axis-row">
+          <span class="trim-axis-label">← →</span>
+          <input type="range" id="trimXSlider" class="trim-slider" min="0" max="80" value="0" aria-label="horizontal trim pixels">
+          <span class="trim-value" id="trimXValue">0 px</span>
+        </div>
+
+        <!-- Height trim: top + bottom inset -->
+        <div class="trim-axis-row">
+          <span class="trim-axis-label">↑ ↓</span>
+          <input type="range" id="trimYSlider" class="trim-slider" min="0" max="80" value="0" aria-label="vertical trim pixels">
+          <span class="trim-value" id="trimYValue">0 px</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- 4. Fine-tune lines -->
+      <div class="ctrl-group">
+        <div class="label">Fine-tune lines</div>
+        <div class="hint">Drag a gold tab to move a line. Tap empty ruler to add one. Tap a tab, then Remove, to delete it.</div>
+        <div class="btn-row">
+          <button class="btn ghost" id="addColBtn">+ Column line</button>
+          <button class="btn ghost" id="addRowBtn">+ Row line</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Image actions -->
+      <button class="btn" id="tryNextBtn" style="display:none;" aria-label="Try another image">↷ Try a different image</button>
+      <button class="btn ghost" id="newImageBtn">← Back to start</button>
+
+    </div>
+  </div>
+
+  <!-- Frames selection grid -->
+  <div class="frames-section" id="framesSection" style="display:none;">
+    <div class="frames-header">
+      <div class="label">Tap frames to select</div>
+      <div class="btn-row small">
+        <button class="btn ghost" id="selectAllBtn">Select all</button>
+        <button class="btn ghost" id="clearBtn">Clear</button>
+      </div>
+    </div>
+    <div class="frames-grid" id="framesGrid"></div>
+    <div class="frames-footer">
+      <div class="selection-summary">
+        <span>SELECTED</span>
+        <span><b id="selCount">0</b> / <span id="totalCount">0</span></span>
+      </div>
+      <button class="btn primary" id="downloadBtn" disabled>↓ Save selected frames</button>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-line">every frame stays full resolution · metadata stripped · no uploads</div>
+    <div class="footer-credit">
+      Developed by <a href="https://lakshan.vercel.app/" target="_blank" rel="noopener noreferrer">V.P.R. Lakshan Vidanapathirana</a>
+    </div>
+    <div class="footer-copy">&copy; <span id="year"></span> RL Collage Splitter</div>
+  </footer>
+</div>
+
+<!-- Save modal -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-label="Save frames">
+  <div class="modal">
+    <div class="modal-head">
+      <span>Save frames</span>
+      <button id="modalClose" aria-label="Close">&times;</button>
+    </div>
+    <p class="modal-hint" id="modalHint">Tap each frame below to save it to your device.</p>
+    <div style="display:flex; gap:10px; margin-bottom:15px; flex-direction:column;">
+      <button class="btn" id="zipBtn" style="display:none; background:var(--surface-2); color:var(--text);">📦 Download as .ZIP (Optional)</button>
+      <button class="btn primary" id="shareAllBtn" style="display:none;">⬆ Share / Save to Photos</button>
+    </div>
+    <div class="modal-list" id="modalList"></div>
+  </div>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
