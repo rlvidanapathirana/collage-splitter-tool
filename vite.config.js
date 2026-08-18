@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: './',
+  base: '/collage-splitter-tool/',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
