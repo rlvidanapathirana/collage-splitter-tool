@@ -608,6 +608,33 @@ canvas#board {
 
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+/* ── Grid hint toggle ───────────────────────────────────────── */
+.hint-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: border-color .2s, background .2s;
+  user-select: none;
+}
+.hint-toggle-row:hover {
+  border-color: var(--border-hover);
+  background: var(--accent-dim);
+  color: var(--cream);
+}
+.hint-toggle-row input[type="checkbox"] {
+  width: 14px; height: 14px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 /* ── Spinner ────────────────────────────────────────────────── */
 .spinner {
   display: inline-block;

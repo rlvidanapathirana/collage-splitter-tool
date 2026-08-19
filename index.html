@@ -61,8 +61,8 @@
             <button data-adj="rows" data-dir="1" aria-label="more rows">+</button>
           </div>
         </div>
-        <div class="hint">Tap +/− to instantly preview the grid on the image.</div>
-        <button class="btn ghost" id="applyUniformBtn">↺ Snap to uniform grid</button>
+        <div class="hint">Tap +/− to instantly preview the grid on the image. Grid lines are placed proportionally based on image dimensions.</div>
+        <button class="btn ghost" id="applyUniformBtn">↺ Snap to proportional grid</button>
       </div>
 
       <div class="divider"></div>
@@ -72,6 +72,10 @@
         <div class="label">Smart detect</div>
         <button class="btn" id="autoDetectBtn">⊹ Auto-detect grid</button>
         <div class="hint">Uses edge + seam analysis. After detecting, fine-tune with rulers.</div>
+        <label class="hint-toggle-row" title="Force the detector to return exactly this many cols × rows">
+          <input type="checkbox" id="useHintCheck">
+          <span>Use grid size hint (cols × rows above)</span>
+        </label>
         <div class="status" id="detectStatus"></div>
       </div>
 

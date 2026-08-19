@@ -28,6 +28,7 @@ const colsInput        = document.getElementById('colsInput');
 const rowsInput        = document.getElementById('rowsInput');
 const applyUniformBtn  = document.getElementById('applyUniformBtn');
 const autoDetectBtn    = document.getElementById('autoDetectBtn');
+const useHintCheck     = document.getElementById('useHintCheck');
 const detectStatus     = document.getElementById('detectStatus');
 const addColBtn        = document.getElementById('addColBtn');
 const addRowBtn        = document.getElementById('addRowBtn');
@@ -487,6 +488,11 @@ function applyUniformPreview() {
   detectStatus.textContent = '';
   saveSettings({ cols: c, rows: r });
   persistLines();
+  // Show cell pixel dimensions
+  const cellW = Math.round(img.naturalWidth  / c);
+  const cellH = Math.round(img.naturalHeight / r);
+  detectStatus.textContent = `▣ ${c}×${r} grid · each cell ≈ ${cellW}×${cellH} px`;
+  detectStatus.className = 'status conf-high';
   render();
 }
 
@@ -578,42 +584,67 @@ autoDetectBtn.addEventListener('click', () => {
   autoDetectBtn.textContent = 'Scanning…';
 
   setTimeout(() => {
-    const result = detectGrid(img);
-    colLines = result.colLines;
-    rowLines = result.rowLines;
-    colsInput.value = colLines.length + 1;
-    rowsInput.value = rowLines.length + 1;
+    const result  = detectGrid(img);
+    const useHint = useHintCheck.checked;
+    const hintC   = clamp(parseInt(colsInput.value)  || 1, 1, 12);
+    const hintR   = clamp(parseInt(rowsInput.value) || 1, 1, 12);
+
+    if (useHint) {
+      // ── Hint mode: force exactly hintC cols × hintR rows ──
+      const pickLines = (detected, wantCount) => {
+        const want = wantCount - 1;
+        if (want <= 0) return [];
+        if (detected.length === want) return detected;
+        if (detected.length > want) {
+          const step = (detected.length - 1) / (want - 1 || 1);
+          return Array.from({ length: want }, (_, i) => detected[Math.round(i * step)]);
+        }
+        // Too few detected — pad with uniform spacing
+        const combined = [...detected];
+        for (let i = 1; i < want + 1; i++) {
+          const candidate = i / (want + 1);
+          if (!combined.some(v => Math.abs(v - candidate) < 0.03)) combined.push(candidate);
+        }
+        combined.sort((a, b) => a - b);
+        return combined.slice(0, want);
+      };
+      colLines = pickLines(result.colLines, hintC);
+      rowLines = pickLines(result.rowLines, hintR);
+      colsInput.value = hintC;
+      rowsInput.value = hintR;
+      detectStatus.textContent = `▣ Hint: ${hintC}×${hintR} grid · CV: ${result.confidence} confidence`;
+      detectStatus.className = 'status conf-medium';
+    } else {
+      // ── Free mode: use CV results as-is ──
+      colLines = result.colLines;
+      rowLines = result.rowLines;
+      colsInput.value = colLines.length + 1;
+      rowsInput.value = rowLines.length + 1;
+      const confLabel = { high: '✦ High confidence', medium: '◈ Medium confidence', low: '◇ Low confidence — please fine-tune' };
+      const confClass = { high: 'conf-high', medium: 'conf-medium', low: 'conf-low' };
+      const grid = `${colLines.length + 1}×${rowLines.length + 1}`;
+      const seamInfo = (result.seamWidthPx > 0 || result.seamHeightPx > 0)
+        ? ` · seam X:${result.seamWidthPx} Y:${result.seamHeightPx}px` : '';
+      detectStatus.textContent = `${confLabel[result.confidence]} · ${grid}${seamInfo}`;
+      detectStatus.className = 'status ' + confClass[result.confidence];
+    }
+
     selected.clear();
     activeHandle = null;
 
-    // Auto-set trim slider from detected seam width/height
+    // Auto-set trim from seam width
     if (result.seamWidthPx > 0) {
       trimX = Math.min(Math.round(result.seamWidthPx / 2), 80);
-      trimXSlider.value = trimX;
-      trimXValue.textContent = trimX + ' px';
+      trimXSlider.value = trimX; trimXValue.textContent = trimX + ' px';
     } else trimX = 0;
-
     if (result.seamHeightPx > 0) {
       trimY = Math.min(Math.round(result.seamHeightPx / 2), 80);
-      trimYSlider.value = trimY;
-      trimYValue.textContent = trimY + ' px';
+      trimYSlider.value = trimY; trimYValue.textContent = trimY + ' px';
     } else trimY = 0;
-
-    if (result.seamWidthPx > 0 || result.seamHeightPx > 0) {
-      saveSettings({ trimX, trimY, trimEnabled });
-    }
+    if (result.seamWidthPx > 0 || result.seamHeightPx > 0) saveSettings({ trimX, trimY, trimEnabled });
 
     render();
     saveSettings({ cols: colLines.length + 1, rows: rowLines.length + 1 });
-
-    const confLabel = { high: '✦ High confidence', medium: '◈ Medium confidence', low: '◇ Low confidence — please fine-tune' };
-    const confClass = { high: 'conf-high', medium: 'conf-medium', low: 'conf-low' };
-    const grid = `${colLines.length + 1}×${rowLines.length + 1}`;
-    const seamInfo = (result.seamWidthPx > 0 || result.seamHeightPx > 0)
-      ? ` · seam X:${result.seamWidthPx} Y:${result.seamHeightPx}` : '';
-    detectStatus.textContent = `${confLabel[result.confidence]} · ${grid}${seamInfo}`;
-    detectStatus.className = 'status ' + confClass[result.confidence];
-
     autoDetectBtn.disabled = false;
     autoDetectBtn.textContent = '⊹ Auto-detect grid';
   }, 30);
